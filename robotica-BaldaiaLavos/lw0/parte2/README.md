@@ -141,7 +141,7 @@ Para parar o ambiente ROS:
 - logs da sessão: logs\session_*.log;
 - matrizes e juntas do Teste 5: docs\evidencias\;
 - figura do modelo em V: docs\modelo_V.svg;
-- relatório combinado: ..\relatorio_LW0.tex.
+- relatório LaTeX: fornecido separadamente e não incluído no repositório.
 
 O README deve ser suficiente para uma pessoa recriar o ambiente e repetir
 pytest, B.5 e os Testes 1, 3 e 8 a partir de uma shell limpa.

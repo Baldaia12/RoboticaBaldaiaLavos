@@ -13,8 +13,7 @@ robotica/                         # ambiente ROS 2 fornecido pelo docente
     ├── README.md
     └── lw0/
         ├── parte1/               # Parte 1 do LW0
-        ├── parte2/               # projeto Python e ciclo de vida
-        └── relatorio_LW0.tex     # relatório final em LaTeX
+        └── parte2/               # projeto Python e ciclo de vida
 ```
 
 O `lab.ps1` pertence à pasta exterior `robotica`. Os scripts Python da Parte 2
@@ -113,7 +112,7 @@ em `shared/`. Para terminar o ambiente ROS:
 - logs da sessão: `lw0\parte2\logs\session_*.log`;
 - evidências dos Testes 4 e 5: `lw0\parte2\docs\evidencias\`;
 - modelo em V: `lw0\parte2\docs\modelo_V.svg`;
-- relatório LaTeX combinado: `lw0\relatorio_LW0.tex`.
+- relatório LaTeX da Parte 2: fornecido separadamente e não incluído no repositório.
 
 Não executar comandos contra o braço real sem autorização do docente e sem
 um membro do grupo junto da paragem de emergência.
