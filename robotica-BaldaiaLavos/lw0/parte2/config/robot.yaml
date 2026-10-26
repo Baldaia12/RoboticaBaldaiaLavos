@@ -1,0 +1,53 @@
+# config/robot.yaml 
+#Aqui são configurados tds os parametros.
+# Trocar entre simulador e robô real = trocar linha: "target" (ou LITE6_TARGET=lab).
+target: sim                # sim | lab
+
+targets:
+  sim:
+    ip: 127.0.0.1          # simulador de firmware UFACTORY
+    check_joint_limit: false
+  lab:
+    ip: 0.0.0.0            # <-- IP do controlador do Lite 6 da bancada
+    check_joint_limit: true
+
+session:
+  settle_after_disconnect_s: 1.0   # pausa após desligar; sem ela o controlador
+                                   # não responde à ligação seguinte (motion_enable code=3)
+
+ros:
+  # O docente informou que não serão atribuídos números aos grupos.
+  # Por isso, usamos o domínio 0. O contentor ROS lê o seu valor do
+  # .env na raiz, onde ROS_DOMAIN_ID também deve ser 0.
+  domain_id: 0
+
+motion:
+  home_joints: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]   # graus
+  joint_speed: 20.0        # graus/s
+  joint_acc: 200.0         # graus/s^2
+  home_tolerance_deg: 0.5  # R3
+  home_timeout_s: 30.0
+
+safety:
+  # Este limite recusa comandos demasiado rápidos enviados pelo nosso Python.
+  # Os outros limites são aplicados pelo próprio controlador, como na parte 1.
+  max_joint_speed: 30.0          # graus/s
+  reduced_max_joint_speed: 54.0  # graus/s, modo reduzido
+  reduced_max_tcp_speed: 150.0   # mm/s, modo reduzido
+  # [Xmax, Xmin, Ymax, Ymin, Zmax, Zmin], em mm.
+  # Fronteira da parte 1: confirmar com o docente antes do braço real.
+  tcp_boundary: [300, 0, 200, -200, 400, 10]
+
+tool:
+  tcp_offset: [0, 0, 0, 0, 0, 0]   # x, y, z (mm), roll, pitch, yaw (graus)
+
+test_poses:                # graus; confirmem que estão dentro dos limites do Lite 6
+  start_joints: [10.0, 0.0, 0.0, 0.0, 0.0, 0.0]   # partida para T-F3, T-P2, T-S1, T-S2
+  far_joints:   [20.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # alvo interrompido em T-S1
+  pose_A_joints: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]      # Testes 5 e 8 (RViz dá radianos: converter!)
+  pose_B_joints: [-70.751, 34.689, 51.769, 0.004, 17.080, -70.750]   # Teste 5, Via 1 (graus)
+  n_connect: 10            # repetições T-P1
+  n_home: 5                # repetições T-P2
+
+logging:
+  dir: logs

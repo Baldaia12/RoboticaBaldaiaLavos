@@ -35,6 +35,6 @@ def test_speed_within_cap():
     assert cfg["motion"]["joint_speed"] <= cfg["safety"]["max_joint_speed"]
 
 
-def test_domain_id_is_group_number():
-    """Falha de propósito até porem o número do grupo (Anexo B) em ros.domain_id."""
-    assert 1 <= load_config()["ros"]["domain_id"] <= 16
+def test_domain_id_reflects_course_instruction():
+    """O docente não atribuirá números de grupo; usamos o domínio 0."""
+    assert load_config()["ros"]["domain_id"] == 0

@@ -1,0 +1,9 @@
+teste,requisito,resultado,medido,criterio
+T-F1,R1,PASSA,connected=True mode=0 state=2 error=0,"ligado, mode=0, state≠4, error_code=0"
+T-F2,R2,PASSA,connected após exceção=False,connected=False
+T-F3,R3,PASSA,code=0 erro_max=0.000°,code=0 e erro_max ≤ 0.5°
+T-P1,P1,PASSA,pior=1.09s média=1.08s n=10 (alvo cumprido),pior < 5.0s (alvo < 2.0s)
+T-P2,P2,PASSA,pior=0.67s média=0.67s home_ok=5/5 (alvo cumprido),todos os regressos válidos e pior < 15.0s (alvo < 8.0s)
+T-I1,I1,PASSA,1 passed in 0.03s,teste automático sem IP fixo; unidades e parâmetros verificados por inspeção
+T-S2,S2,PASSA,recusou=True movimento=0.000°,ValueError e movimento < 0.05°
+T-S1,S1,PASSA,state=4→4 progresso antes da paragem=0.8° deriva em 1s=0.000° distância ao alvo=9.1°,"state=4, deriva < 0.05° e alvo não atingido"

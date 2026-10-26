@@ -1,9 +1,0 @@
-teste,requisito,resultado,medido,criterio
-T-F1,R1,PASSA,connected=True mode=0 state=2 error=0,"ligado, mode=0, state≠4, error_code=0"
-T-F2,R2,FALHA,exceção: KeyError: 'arm',—
-T-F3,R3,FALHA,exceção: RuntimeError: motion_enable falhou (code=3),—
-T-P1,P1,FALHA,exceção: RuntimeError: motion_enable falhou (code=3),—
-T-P2,P2,FALHA,exceção: RuntimeError: motion_enable falhou (code=3),—
-T-I1,I1,PASSA,"1 passed, 1 warning in 0.08s",pytest test_no_hardcoded_ip passa
-T-S1,S1,PASSA,deriva em 1s=0.000° distância ao alvo=45.2°,deriva < 0.05° e alvo não atingido
-T-S2,S2,FALHA,exceção: RuntimeError: motion_enable falhou (code=3),—
