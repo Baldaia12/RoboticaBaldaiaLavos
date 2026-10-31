@@ -13,13 +13,12 @@ Jacobiano numérico); esta pasta guarda os CSVs e capturas produzidos pelo
 | `lw2_ik_sim_A_S1.csv` ... `_S4.csv` | **E.2**: as 4 soluções distintas para a pose A, uma por arranque (`S1`-`S4`). Cada ficheiro tem a linha da respetiva solução. |
 | `E2_S1.png` ... `E2_S4.png` | **E.2**: capturas no Gazebo de cada uma das 4 soluções (S1-S4). |
 | `lw2_study_convergence.csv` | **E.1**: `ik_study convergence` - 500 poses (seed fixa 2627), arranque `S0`, passo `h = H`. Colunas: `h`, `index`, `q_true1..6`, `status`, `n_iter`, `q1..6`, `ep_mm`, `eo_deg`. |
-| `lw2_study_nudge.csv` | Estudo complementar `ik_study nudge` - as mesmas 500 poses a partir de `S0` para vários passos do Jacobiano numérico `h` (1e-1 ... 1e-14), 3000 linhas. |
-| `lw2_study_zero.csv` | Estudo complementar `ik_study zero` - as mesmas 500 poses com arranque em `Theta = 0` e `h = H`, 500 linhas. |
+| `lw2_study_nudge.csv` | **E.3** (incremento *h*): `ik_study nudge` - repete a E.1 para vários passos do Jacobiano numérico `h` (1e-1 ... 1e-14), as mesmas 500 poses a partir de `S0`, 3000 linhas. |
+| `lw2_study_zero.csv` | **E.4** (configuração nula): `ik_study zero` - as mesmas 500 poses com arranque em `Theta = 0` e `h = H`, 500 linhas. |
 | `lw2_ik_real.csv` | *(por preencher)* — `ik_check` no **robô real** (Parte D, no laboratório). |
 
-> Nota: `convergence` corresponde ao estudo E.1. Os estudos `nudge` e `zero`
-> cobrem as restantes alíneas (E.3 e E.4) — confirmar a correspondência exata
-> com o enunciado antes da entrega.
+> Correspondência com o enunciado (Parte E): `convergence` = **E.1**,
+> `nudge` = **E.3** (incremento *h*), `zero` = **E.4** (arranque em `Theta = 0`).
 
 ## Resultados
 
