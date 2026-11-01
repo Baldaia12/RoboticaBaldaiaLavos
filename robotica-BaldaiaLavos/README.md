@@ -9,15 +9,24 @@ para a unidade curricular Robotics, 2026/2027.
 robotica/                         # ambiente ROS 2 fornecido pelo docente
 ├── lab.ps1                       # comandos Docker/ROS no Windows
 ├── shared/                       # ficheiros exportados pelo ambiente ROS
+├── src/lite6_kinematics/         # pacote do docente (editamos só os 2 TODO)
 └── robotica-BaldaiaLavos/        # trabalho do grupo
     ├── README.md
-    └── lw0/
-        ├── parte1/               # Parte 1 do LW0
-        └── parte2/               # projeto Python e ciclo de vida
+    ├── lw0/
+    │   ├── parte1/               # Parte 1 do LW0
+    │   └── parte2/               # projeto Python e ciclo de vida
+    ├── lw1/                      # LW1 - cinemática direta (entregáveis)
+    └── lw2/                      # LW2 - cinemática inversa (entregáveis)
 ```
 
 O `lab.ps1` pertence à pasta exterior `robotica`. Os scripts Python da Parte 2
 correm a partir de `robotica-BaldaiaLavos\lw0\parte2`.
+
+Os entregáveis do LW1 e do LW2 estão em `lw1/` e `lw2/`; cada pasta tem o seu
+próprio `README.md`. O código avaliado (apenas os blocos `TODO`) fica em
+`src/lite6_kinematics/lite6_kinematics/forward_kinematics.py` (LW1) e
+`inverse_kinematics.py` (LW2); todos os outros ficheiros do pacote do docente
+ficam iguais aos originais.
 
 ## Identificação ROS
 
