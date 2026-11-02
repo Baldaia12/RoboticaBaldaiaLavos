@@ -15,7 +15,7 @@ Jacobiano numérico); esta pasta guarda os CSVs e capturas produzidos pelo
 | `lw2_study_convergence.csv` | **E.1**: `ik_study convergence` - 500 poses (seed fixa 2627), arranque `S0`, passo `h = H`. Colunas: `h`, `index`, `q_true1..6`, `status`, `n_iter`, `q1..6`, `ep_mm`, `eo_deg`. |
 | `lw2_study_nudge.csv` | **E.3** (incremento *h*): `ik_study nudge` - repete a E.1 para vários passos do Jacobiano numérico `h` (1e-1 ... 1e-14), as mesmas 500 poses a partir de `S0`, 3000 linhas. |
 | `lw2_study_zero.csv` | **E.4** (configuração nula): `ik_study zero` - as mesmas 500 poses com arranque em `Theta = 0` e `h = H`, 500 linhas. |
-| `lw2_ik_real.csv` | *(por preencher)* — `ik_check` no **robô real** (Parte D, no laboratório). |
+| `lw2_ik_real.csv` | Resultado do `ik_check` no **robô real** (Parte D): poses A-D atingidas, U recusada. Inclui a FK da solução (`student_*`), a referência `tf_*`, a pose do **controlador** (`ctrl_*`) e os erros vs tf e vs controlador. |
 
 > Correspondência com o enunciado (Parte E): `convergence` = **E.1**,
 > `nudge` = **E.3** (incremento *h*), `zero` = **E.4** (arranque em `Theta = 0`).
@@ -40,7 +40,15 @@ Jacobiano numérico); esta pasta guarda os CSVs e capturas produzidos pelo
   - dentro de cada par, o **pulso inverte-se**.
 
 ### Parte D - robô real
-*(por preencher)*
-- `ik_check` no robô real: poses atingidas ______ / recusadas ______.
-- Erro máximo: ______ mm / ______°.
-- Meta P2.4: ______.
+- `ik_check` no robô real: **A, B, C, D atingidas** (4); pose **U recusada** sem movimento (1).
+  Meta **P2.6** (recusar fora de alcance, sim + real): **cumprida** (2/2). ✅
+- **vs TF (modelo):** erro máximo **1.171 mm** / **0.0421°** (média 0.737 mm) — as soluções da IK
+  atingem o alvo; a cinemática inversa mantém-se validada no robô real.
+- **vs controlador (P2.5):** erro máximo **3.775 mm** / **0.5643°** (média 3.138 mm).
+  Meta **P2.5** (< 3 mm / < 0.1°): **não cumprida**.
+
+**Análise (P2.5 não cumprida):** o erro vs controlador (média 3.1 mm) é praticamente igual ao da
+cinemática direta no LW1 (média 2.9 mm vs controlador), o que confirma que o desvio vem da
+**exatidão absoluta do robô físico** (calibração de zero das juntas), **não da IK** — se fosse erro
+da inversa, não coincidiria com o da direta. As soluções estão validadas de forma independente
+contra o TF a ≈ 1 mm.
