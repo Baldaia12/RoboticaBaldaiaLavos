@@ -84,8 +84,105 @@ def inverse_kinematics(T_d) -> list:
           TOL_WRIST, those axes are aligned and every solution returned has
           q4 = 0.
     """
-    # TODO (LW2, Part B)
-    raise NotImplementedError('inverse_kinematics() is not implemented yet')
+    """Calcula todas as configurações distintas que atingem a pose T_d."""
+    T_d = np.asarray(T_d, dtype=float)
+    R = T_d[:3, :3]
+
+    # Na Lab 1, a ferramenta está a 0.0615 m do centro do punho
+    # ao longo do eixo z do referencial final.
+    x, y, z = T_d[:3, 3] - 0.0615 * R[:, 2]
+    z -= 0.2433  # Altura do ombro na Lab 1.
+
+    upper_arm = 0.200
+    forearm = math.hypot(0.087, 0.2276)
+    forearm_offset = math.atan2(0.087, -0.2276)
+    radius = math.hypot(x, y)
+
+    # Lei dos cossenos no triângulo ombro-cotovelo-punho.
+    cosine = ((radius**2 + z**2 - upper_arm**2 - forearm**2)
+              / (2.0 * upper_arm * forearm))
+
+    # Uma pequena margem evita rejeitar uma pose exatamente
+    # na fronteira do alcance por erro de arredondamento.
+    if cosine < -1.0 - 1e-12 or cosine > 1.0 + 1e-12:
+        return []
+
+    elbow = math.acos(max(-1.0, min(1.0, cosine)))
+    azimuth = math.atan2(y, x)
+    two_pi = 2.0 * math.pi
+    solutions = []
+
+    def wrap(angle):
+        """Coloca o ângulo no intervalo (-pi, pi]."""
+        value = (angle + math.pi) % two_pi - math.pi
+        return value + two_pi if value <= -math.pi else value
+
+    # Duas direções possíveis para a base.
+    for q1, signed_radius in ((azimuth, radius),
+                              (azimuth + math.pi, -radius)):
+
+        # Em cada direção, há duas posições possíveis do cotovelo.
+        for delta in (elbow, -elbow):
+            q3 = forearm_offset - delta
+            q2 = (math.atan2(signed_radius, z)
+                  - math.atan2(forearm * math.sin(delta),
+                               upper_arm + forearm * math.cos(delta)))
+
+            # Orientação resultante das três primeiras juntas,
+            # de acordo com a cinemática direta da Lab 1.
+            c1, s1 = math.cos(q1), math.sin(q1)
+            cv, sv = math.cos(q2 - q3), math.sin(q2 - q3)
+            R03 = np.array([
+                [c1 * cv,  s1, -c1 * sv],
+                [s1 * cv, -c1, -s1 * sv],
+                [-sv,       0.0, -cv]
+            ])
+
+            # Orientação que as juntas do punho ainda têm de produzir.
+            R36 = R03.T @ R
+            sine_abs = math.hypot(R36[0, 2], R36[1, 2])
+
+            if sine_abs < TOL_WRIST:
+                # Na singularidade, q4 e q6 não ficam determinados
+                # individualmente. A convenção do trabalho é q4 = 0.
+                if R36[2, 2] > 0.0:
+                    wrist_branches = [(
+                        0.0, 0.0,
+                        math.atan2(R36[1, 0], R36[0, 0])
+                    )]
+                else:
+                    wrist_branches = [(
+                        0.0, math.pi,
+                        math.atan2(R36[1, 0], -R36[0, 0])
+                    )]
+            else:
+                # Fora da singularidade, o punho tem duas soluções.
+                wrist_branches = []
+                for sine in (sine_abs, -sine_abs):
+                    q4 = math.atan2(-R36[1, 2] / sine,
+                                    -R36[0, 2] / sine)
+                    q5 = math.atan2(sine, R36[2, 2])
+                    q6 = math.atan2(-R36[2, 1] / sine,
+                                    R36[2, 0] / sine)
+                    wrist_branches.append((q4, q5, q6))
+
+            for q4, q5, q6 in wrist_branches:
+                candidate = np.array([
+                    wrap(q1), wrap(q2), wrap(q3),
+                    wrap(q4), wrap(q5), wrap(q6)
+                ])
+
+                # Ângulos que diferem em 2*pi representam
+                # a mesma configuração.
+                repeated = any(
+                    np.all(np.abs((candidate - previous + math.pi)
+                                  % two_pi - math.pi) <= TOL_SAME)
+                    for previous in solutions
+                )
+                if not repeated:
+                    solutions.append(candidate)
+
+    return solutions
 
 
 def select_solution(solutions, q_current):
@@ -109,8 +206,43 @@ def select_solution(solutions, q_current):
     remain, the one at the smallest euclidean distance from q_current is
     selected, and the returned vector is that solution with the replaced angles.
     """
-    # TODO (LW2, Part B)
-    raise NotImplementedError('select_solution() is not implemented yet')
+    """Escolhe a solução permitida mais próxima da configuração atual."""
+    q_current = np.asarray(q_current, dtype=float)
+    best = None
+    best_distance = math.inf
+    two_pi = 2.0 * math.pi
+
+    for solution in solutions:
+        candidate = np.empty(6, dtype=float)
+        valid = True
+
+        for i in range(6):
+            angle = float(solution[i])
+            lower, upper = JOINT_LIMITS[i]
+
+            # Encontrar os inteiros k que colocam
+            # angle + 2*pi*k dentro dos limites da junta.
+            k_min = math.ceil((lower - angle) / two_pi)
+            k_max = math.floor((upper - angle) / two_pi)
+
+            if k_min > k_max:
+                valid = False
+                break
+
+            # Escolher o equivalente mais próximo da posição atual.
+            k = min(
+                range(k_min, k_max + 1),
+                key=lambda value: abs(angle + two_pi * value - q_current[i])
+            )
+            candidate[i] = angle + two_pi * k
+
+        if valid:
+            distance = np.linalg.norm(candidate - q_current)
+            if distance < best_distance:
+                best = candidate
+                best_distance = distance
+
+    return best  # None se nenhuma solução estiver dentro dos limites.
 
 
 # =============================================================================
@@ -139,33 +271,62 @@ class IkNode(Node):
     node on private topics: use them, do not write the names again.
     """
 
-    def __init__(self, target_topic='/lite6_ik/target', joint_states_topic='/joint_states',
+    def __init__(self, target_topic='/lite6_ik/target',
+                 joint_states_topic='/joint_states',
                  solution_topic='/lite6_ik/solution'):
         super().__init__('ik_node')
-        # TODO (LW2, Part B): create the publisher on solution_topic and the
-        # two subscriptions (callbacks: self.on_joint_state, self.on_target).
-        raise NotImplementedError('IkNode.__init__ is not implemented yet')
+
+        # Ainda não recebemos os ângulos atuais do robô.
+        self.q_current = None
+
+        self.publisher = self.create_publisher(
+            JointState, solution_topic, 10
+        )
+        self.create_subscription(
+            JointState, joint_states_topic, self.on_joint_state, 10
+        )
+        self.create_subscription(
+            PoseStamped, target_topic, self.on_target, 10
+        )
 
     def on_joint_state(self, msg):
-        """Called for every JointState: keep the latest joint angles."""
-        # TODO (LW2, Part B)
-        #   Pick the angles of JOINT_NAMES BY NAME from msg.name / msg.position:
-        #   the order is not promised and the message may carry other joints.
-        #   Store them; do nothing else here (this runs inside the spin, and
-        #   joint states arrive hundreds of times per second).
-        raise NotImplementedError('IkNode.on_joint_state is not implemented yet')
+        """Guarda os últimos ângulos das seis juntas."""
+        # A mensagem pode trazer as juntas noutra ordem
+        # e também pode conter juntas de outros dispositivos.
+        positions = dict(zip(msg.name, msg.position))
+
+        if not all(name in positions for name in JOINT_NAMES):
+            return
+
+        self.q_current = np.array(
+            [positions[name] for name in JOINT_NAMES], dtype=float
+        )
 
     def on_target(self, msg):
-        """Called for every desired pose: solve it and publish the solution."""
-        # TODO (LW2, Part B)
-        #   1. if no joint states have arrived yet, log a warning and return
-        #   2. T_d = transform_from_pose(msg)
-        #   3. compute the solutions and select one from the latest angles,
-        #      with the two functions above
-        #   4. if there is a selected solution publish the JointState described
-        #      in the class docstring; otherwise log unreachable or
-        #      out_of_range (and do not publish)
-        raise NotImplementedError('IkNode.on_target is not implemented yet')
+        """Calcula e publica a solução da pose pedida."""
+        if self.q_current is None:
+            self.get_logger().warning('Ainda não recebi /joint_states')
+            return
+
+        T_d = transform_from_pose(msg)
+        solutions = inverse_kinematics(T_d)
+
+        if not solutions:
+            self.get_logger().warning('unreachable')
+            return
+
+        selected = select_solution(solutions, self.q_current)
+        if selected is None:
+            self.get_logger().warning('out_of_range')
+            return
+
+        answer = JointState()
+        answer.name = JOINT_NAMES
+        answer.position = selected.tolist()
+
+        # O verificador associa a resposta ao pedido por esta data.
+        answer.header.stamp = msg.header.stamp
+        self.publisher.publish(answer)
 
 
 # =============================================================================
