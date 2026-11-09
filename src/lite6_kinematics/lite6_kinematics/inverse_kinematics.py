@@ -132,22 +132,31 @@ def inverse_kinematics(T_d, q_start, h: float = None):
     q = np.asarray(q_start, dtype=float).reshape(6).copy()
     k = 0
     while True:
-        e = pose_error(forward_kinematics(q), T_d)                       # 1.
+        e = pose_error(forward_kinematics(q), T_d)
+        #verifica se a pose atual já está suficientemente próxima da pose desejada                  # 1.
         if np.linalg.norm(e[:3]) < TOL_POS and np.linalg.norm(e[3:]) < TOL_ORI:
-            break                                                        # 2. converged
+            break
+        # evita continuar indefinidamente se não houver convergência                                                        # 2. converged
         if k == MAX_ITER:
             return q, 'max_iterations', k                                # 3.
         try:
+            # calcula a alteração dos ângulos resolvendo J*dq = e
             dq = np.linalg.solve(jacobian(q, h), e)                      # 4. J dq = e
         except np.linalg.LinAlgError:
+            # se o Jacobiano for singular, não é possível calcular uma correção
             return q, 'singular', k
-        largest = np.max(np.abs(dq))
+        largest = np.max(np.abs(dq)) # encontra a maior alteração angular proposta
+        # verifica se o passo calculado é demasiado grande
         if largest > MAX_STEP:                                           # 5. step limit
-            dq = dq * (MAX_STEP / largest)
+            dq = dq * (MAX_STEP / largest) # reduz proporcionalmente todo o passo para respeitar o limite
+            #nao altera apenas uma junta porque isso mudaria a direção da correção calculada pelo método de Newton
         q = q + dq                                                       # 6.
         k += 1
 
     # Joint ranges: shift by +-2 pi when that brings an angle inside its range.
+    # Ajusta os ângulos equivalentes por ±2π quando possível,
+    # verifica se todas as juntas estão dentro dos limites físicos
+    # e devolve a solução válida ou o estado out_of_range.
     for i, (low, high) in enumerate(JOINT_LIMITS):
         if q[i] < low and low <= q[i] + 2 * math.pi <= high:
             q[i] += 2 * math.pi
