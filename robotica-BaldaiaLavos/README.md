@@ -1,127 +1,43 @@
-# Robotica Baldaia Lavos
+# Robótica 2026/2027 — grupo Baldaia–Lavos (PL2)
 
-Repositório do grupo Bernardo Pereira (2022219048) e João Lavos (2021222529)
-para a unidade curricular Robotics, 2026/2027.
+Bernardo Pereira (2022219048) e João Lavos (2021222529). Repositório: [RoboticaBaldaiaLavos](https://github.com/Baldaia12/RoboticaBaldaiaLavos), ramo `windows`.
 
-## Estrutura
+## Entregas e evidências
 
-```text
-robotica/                         # ambiente ROS 2 fornecido pelo docente
-├── lab.ps1                       # comandos Docker/ROS no Windows
-├── shared/                       # ficheiros exportados pelo ambiente ROS
-├── src/lite6_kinematics/         # pacote do docente (editamos só os 2 TODO)
-└── robotica-BaldaiaLavos/        # trabalho do grupo
-    ├── README.md
-    ├── lw0/
-    │   ├── parte1/               # Parte 1 do LW0
-    │   └── parte2/               # projeto Python e ciclo de vida
-    ├── lw1/                      # LW1 - cinemática direta (entregáveis)
-    └── lw2/                      # LW2 - cinemática inversa (entregáveis)
-```
+| Parte | Código e evidências | Relatório |
+|---|---|---|
+| LW0 Parte 1 — operação e segurança | [README](lw0/parte1/README.md) | [LaTeX conjunto](relatorio/main.tex) |
+| LW0 Parte 2 — ambiente e ciclo de vida | [README](lw0/parte2/README.md) | [LaTeX conjunto](relatorio/main.tex) |
+| LW1 — cinemática direta | [README](lw1/README.md) | [LaTeX conjunto](relatorio/main.tex) |
+| LW2 — cinemática inversa algébrica | [README](lw2/README.md) | [LaTeX conjunto](relatorio/main.tex) |
 
-O `lab.ps1` pertence à pasta exterior `robotica`. Os scripts Python da Parte 2
-correm a partir de `robotica-BaldaiaLavos\lw0\parte2`.
+O relatório LaTeX reúne as quatro partes e inclui o esboço da LW1, o gráfico da LW0 e as quatro capturas E.2 da LW2. As tabelas numéricas do relatório resultam dos CSV identificados nos README de cada parte; os CSV produzidos pelos verificadores não foram editados.
 
-Os entregáveis do LW1 e do LW2 estão em `lw1/` e `lw2/`; cada pasta tem o seu
-próprio `README.md`. O código avaliado (apenas os blocos `TODO`) fica em
-`src/lite6_kinematics/lite6_kinematics/forward_kinematics.py` (LW1) e
-`inverse_kinematics.py` (LW2); todos os outros ficheiros do pacote do docente
-ficam iguais aos originais.
+## Organização do repositório
 
-## Identificação ROS
+- `lw0/parte1/`: scripts de registo e sessão segura, dados e relatório da primeira sessão.
+- `lw0/parte2/`: projeto Python/SDK, configuração, testes, logs e relatório do ambiente e ciclo de vida.
+- `lw1/`: medições e CSV do `fk_check` em Gazebo e no braço, mais [vídeo da execução real](lw1/lw1_fk_real.mp4).
+- `lw2/`: CSV do `ik_check` e `ik_study`, capturas E.2 e [vídeo da execução real](lw2/lw2_ik_real.mp4).
+- `relatorio/`: fonte LaTeX e imagens para a Entrega 1.
+- `../src/lite6_kinematics/lite6_kinematics/forward_kinematics.py`: implementação da LW1.
+- `../src/lite6_ik/lite6_ik/inverse_kinematics.py`: implementação algébrica da LW2. Os ficheiros antigos de Newton em `lite6_kinematics` não são a entrega da LW2 algébrica.
 
-O docente informou que não seriam atribuídos números aos grupos. Por isso,
-usamos `ROS_DOMAIN_ID=0` no `.env` da pasta exterior `robotica`. Todos os
-terminais ROS devem usar o mesmo valor.
+Os links para os vídeos são relativos: funcionam no repositório local e, depois de os ficheiros serem publicados, na página do GitHub, sem prender a documentação ao nome de uma branch. Os vídeos têm 90,24 s (LW1) e 66,32 s (LW2).
 
-## Parte 2 em Python
+## Resultados medidos
 
-No PowerShell:
+| Verificação | Resultado principal | Referência e limiar do enunciado |
+|---|---|---|
+| LW1 Gazebo, 10 poses | máximo 0,982 mm / 0,0014° | FK vs. TF; P1.3: < 2 mm / < 0,05° — cumpre |
+| LW1 braço, 10 poses | máximo 4,111 mm / 0,7393° | FK vs. controlador; P1.4: < 3 mm / < 0,1° — **não cumpre** |
+| LW2 Gazebo, A–D | máximo 1,105 mm / 0,00155°; U recusada | pose atingida vs. alvo, TF; P2.4 e P2.6 — cumprem |
+| LW2 braço, A–D | máximo 3,788 mm / 0,5686°; U recusada | pose atingida vs. alvo, controlador; P2.5 — **não cumpre**; P2.6 cumpre |
 
-```powershell
-cd C:\Users\balda\Documents\Mestrado\Robotica\P\robotica\robotica-BaldaiaLavos\lw0\parte2
-& C:\Users\balda\venvs\robotica\Scripts\Activate.ps1
-pytest -q
-```
+As comparações com TF no robô real também foram registadas: LW1, 0,982 mm / 0,0014°; LW2, 1,188 mm / 0,0399°. Não substituem a comparação com o controlador exigida em P1.4 e P2.5. Os valores devem ser discutidos com o docente; não foram arredondados para declarar esses requisitos cumpridos.
 
-Para criar o ambiente do zero:
+## Reproduzir LW1 e LW2
 
-```powershell
-python -m venv C:\Users\balda\venvs\robotica
-& C:\Users\balda\venvs\robotica\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-pip install -e .
-```
+No Windows, a partir da pasta exterior `robotica`, iniciar Docker Desktop e executar `./lab.ps1 up` (em PowerShell: `.\lab.ps1 up`), depois `.\lab.ps1 shell` em cada terminal. Dentro do contentor, usar `lab build` após alterações no código e abrir uma shell nova. Os comandos exatos, a ordem dos nós, os testes e os ficheiros de saída estão nos README da [LW1](lw1/README.md) e [LW2](lw2/README.md). A pasta `shared/` da raiz exterior corresponde a `~/shared` no contentor.
 
-## Simulador de firmware UFACTORY
-
-Numa janela do PowerShell do Windows:
-
-```powershell
-docker start -ai uf_software
-```
-
-Dentro do contentor, iniciar o perfil Lite 6:
-
-```bash
-screen -wipe
-/xarm_scripts/xarm_start.sh 6 9
-```
-
-Deixar esta janela aberta. O Studio do simulador fica disponível em
-`http://127.0.0.1:18333`.
-
-Noutra janela PowerShell, a partir de `lw0\parte2`:
-
-```powershell
-python scripts\b5_connect.py --move
-python scripts\test8_fk_compare.py --pose A --tf2-xyz 0.087 0.000 0.154
-python scripts\lifecycle_tests.py
-```
-
-O teste de ciclo de vida termina com `T-S1`, que provoca uma paragem
-intencional. Para repetir o ciclo completo, reiniciar primeiro o simulador.
-
-## Ambiente ROS 2, MoveIt 2 e Gazebo
-
-Estes comandos são executados a partir da pasta exterior `robotica`, não da
-pasta `robotica-BaldaiaLavos`:
-
-```powershell
-cd C:\Users\balda\Documents\Mestrado\Robotica\P\robotica
-.\lab.ps1 up
-.\lab.ps1 doctor
-.\lab.ps1 shell
-```
-
-Dentro do contentor, os testes avançados são:
-
-```bash
-lab test 1
-lab test 1b       # segundo terminal, para o listener
-lab test 2
-lab test 3
-lab test 4 link_base link_eef
-lab test 5 link_base link_eef
-lab test 6
-lab test 7
-```
-
-O Teste 8 é executado pelo script Python do grupo. O PDF do Teste 4 é criado
-em `shared/`. Para terminar o ambiente ROS:
-
-```powershell
-.\lab.ps1 down
-```
-
-## Evidências e relatório
-
-- resultados do ciclo de vida: `lw0\parte2\logs\lifecycle_sim_*.csv`;
-- logs da sessão: `lw0\parte2\logs\session_*.log`;
-- evidências dos Testes 4 e 5: `lw0\parte2\docs\evidencias\`;
-- modelo em V: `lw0\parte2\docs\modelo_V.svg`;
-- relatório LaTeX da Parte 2: fornecido separadamente e não incluído no repositório.
-
-Não executar comandos contra o braço real sem autorização do docente e sem
-um membro do grupo junto da paragem de emergência.
+Para ensaios no braço: primeiro simulação, modo reduzido, espaço de trabalho livre e uma pessoa na paragem de emergência, conforme a LW0 Parte 1. `Ctrl+C` não interrompe um movimento já em curso.
