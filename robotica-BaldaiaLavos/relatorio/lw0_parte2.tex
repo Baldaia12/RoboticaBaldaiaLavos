@@ -1,0 +1,99 @@
+\clearpage
+\section{LW0 Parte 2 — Ambiente e ciclo de vida}
+\textbf{Evidência:} logs e ficheiros em \source{lw0/parte2/}. Estes ensaios foram feitos em simulação; a validação física das LW1/LW2 é relatada nas secções próprias.
+
+\subsection{Níveis escolhidos e validação do ambiente}
+Foi usado o nível intermédio em Windows (Python 3.12.10, ambiente virtual, SDK xArm e pacote local \source{lite6}) e o nível avançado pela via Docker com ROS 2 Jazzy, MoveIt 2 e Gazebo Harmonic. O simulador de firmware UFACTORY correu o perfil Lite 6 \source{6 9}, firmware v2.4.0, em \source{127.0.0.1}. O grupo usou \source{ROS\_DOMAIN\_ID=0}, por não lhe ter sido atribuído um número, conforme a informação registada.
+
+Na verificação B.5, \source{pytest -q} passou cinco testes; a sessão segura ligou ao simulador, e o movimento \emph{start $\to$ home} devolveu código 0 em $0{,}67$ s, com erro máximo impresso de $0{,}000^\circ$. A configuração vem de \source{config/robot.yaml}; não há IP \source{192.168} fixo no Python. O repositório tem commits e instruções de reprodução.
+
+\begin{center}\small
+\begin{tabular}{@{}cllp{8.5cm}@{}}\toprule
+Teste & Tema & Resultado & Evidência registada\\\midrule
+1 & ROS 2 & PASSA & Listener recebeu \emph{Hello World}.\\
+2 & Pacotes UFACTORY & PASSA & Dez pacotes encontrados.\\
+3 & Modelo/RViz & PASSA & Lite 6 e MotionPlanning; estado global OK.\\
+4 & Árvore TF & PASSA & PDF da cadeia \source{world} $\to$ \source{link\_base} $\to$ \source{link\_eef}.\\
+5 & \source{tf2\_echo} & PASSA & Duas matrizes $4\times4$ e respetivas juntas (abaixo).\\
+6 & Gazebo & PASSA & Formas visíveis e relógio a avançar.\\
+7 & MoveIt/Gazebo & PASSA & \emph{Plan \& Execute} deslocou o Lite 6 no Gazebo.\\
+8 & SDK/TF & PASSA & Código 0; diferença de posição de $0{,}200$ mm na pose A.\\\bottomrule
+\end{tabular}
+\captionof{table}{Testes C.5. Não houve falhas finais e, por isso, não há primeira mensagem de erro a transcrever para estes ensaios.}
+\end{center}
+
+\subsection{Teste 5 — duas transformações e juntas}
+As matrizes seguintes são as leituras \source{tf2\_echo} guardadas em \source{docs/evidencias/}, arredondadas a três casas decimais, em metros. Não representam uma medição com precisão superior a esse arredondamento.
+\begin{align*}
+\mathbf q_A&=[0,0,0,0,0,0]\ \mathrm{rad},&
+{}^0T_{6,A}&=\begin{bmatrix}1&0&0&0.087\\0&-1&0&0\\0&0&-1&0.154\\0&0&0&1\end{bmatrix},\\[1mm]
+\mathbf q_B&=[0.858983,1.378099,1.051537,0.000070,-0.326669,0.858897]\ \mathrm{rad},&
+{}^0T_{6,B}&=\begin{bmatrix}1&0&0&0.134\\0&-1&0&0.156\\0&0&-1&-0.024\\0&0&0&1\end{bmatrix}.
+\end{align*}
+Na pose B, as juntas correspondem a $[49{,}216,78{,}959,60{,}249,0{,}004,-18{,}717,49{,}211]^\circ$. A diferença de unidades é relevante: ROS 2 usa metros/radianos; o SDK usa mm/graus por omissão.
+
+\subsection{Testes 7 e 8, e reprodução}
+No teste 7, o Gazebo mostrou a execução com dinâmica pelo controlador simulado; o RViz mostrou o plano e o modelo cinemático, sem a física do simulador. No teste 8, o SDK devolveu $[87{,}0,0{,}0,154{,}2,180,0,0]$ (mm e graus) para A; a posição TF era $[87,0,154]$ mm. Logo, $\|\Delta\mathbf p\|=0{,}200$ mm à precisão dos números reportados.
+
+Seguindo o README a partir de uma shell limpa, foram repetidos os testes Python e B.5, bem como os testes 1, 3 e 8. O B.5 terminou com erro máximo impresso de $0{,}000^\circ$; o listener recebeu \emph{Hello World}, o RViz apresentou o modelo com estado global OK e a repetição do teste 8 manteve $0{,}200$ mm. Os ficheiros de evidência incluem os logs do ciclo de vida, as matrizes e a árvore de frames.
+
+\subsection{Exercício de ciclo de vida: requisitos e testes}
+\begin{center}\scriptsize
+\begin{tabular}{@{}llp{11.5cm}@{}}\toprule
+ID / teste & Tipo & Requisito verificável\\\midrule
+R1 / T-F1 & Funcional & \source{safe\_session} liga e deixa modo 0, estado diferente de 4 e sem erros.\\
+R2 / T-F2 & Funcional & Fecha a ligação mesmo após exceção no bloco da sessão.\\
+R3 / T-F3 & Funcional & \source{home} termina com código 0 e erro máximo $\leq0{,}5^\circ$ nas seis juntas.\\
+P1 / T-P1 & Desempenho & Abertura em 10 repetições: limiar $<5$ s, alvo $<2$ s.\\
+P2 / T-P2 & Desempenho & Regresso a home em 5 repetições: limiar $<15$ s, alvo $<8$ s.\\
+I1 / T-I1 & Interface & Parâmetros de \source{robot.yaml}, sem IP fixo no Python; unidades SDK documentadas.\\
+S1 / T-S1 & Segurança & Exceção durante movimento deixa estado 4, deriva $<0{,}05^\circ$ em 1 s, alvo não atingido.\\
+S2 / T-S2 & Segurança & Velocidade acima do máximo provoca \source{ValueError}, sem movimento.\\\bottomrule
+\end{tabular}
+\captionof{table}{Requisitos associados a teste antes da execução.}
+\end{center}
+
+\begin{center}\scriptsize
+\begin{tabular}{@{}llp{10.2cm}@{}}\toprule
+Teste & Resultado & Medição / observação\\\midrule
+T-F1 & PASSA & \source{connected=True}, modo 0, estado 2, erro 0.\\
+T-F2 & PASSA & \source{connected=False} após exceção induzida.\\
+T-F3 & PASSA & Código 0; erro máximo impresso $0{,}000^\circ$.\\
+T-P1 & PASSA & Pior $1{,}09$ s, média $1{,}08$ s, $n=10$.\\
+T-P2 & PASSA & Pior $0{,}67$ s, média $0{,}67$ s; 5/5 chegadas válidas.\\
+T-I1 & PASSA & Teste automático: um teste passou.\\
+T-S1 & PASSA & Estado $4\to4$, progresso $0{,}8^\circ$, deriva $0{,}000^\circ$, distância ao alvo $9{,}1^\circ$.\\
+T-S2 & PASSA & Comando recusado, deslocação $0{,}000^\circ$.\\\bottomrule
+\end{tabular}
+\captionof{table}{Resultados registados no simulador de firmware, em \source{logs/lifecycle\_sim\_20261026\_170724.csv}.}
+\end{center}
+
+\subsection{Rastreabilidade e modelo em V}
+\begin{center}\scriptsize
+\begin{tabular}{@{}llll@{}}\toprule
+Requisito & Módulo/função & Teste & Resultado\\\midrule
+R1 & \source{session.py::safe\_session} & T-F1 & PASSA\\
+R2 & \source{safe\_session}/\source{finally} & T-F2 & PASSA\\
+R3 & \source{session.py::go\_home} & T-F3 & PASSA\\
+P1 & \source{safe\_session} & T-P1 & PASSA, $1{,}09$ s\\
+P2 & \source{go\_home} & T-P2 & PASSA, $0{,}67$ s\\
+I1 & \source{config.py::load\_config} & T-I1 & PASSA\\
+S1 & \source{safe\_session}/\source{set\_state(4)} & T-S1 & PASSA\\
+S2 & \source{session.py::\_check\_speed\_cap} & T-S2 & PASSA\\\bottomrule
+\end{tabular}
+\captionof{table}{Cada requisito liga-se a implementação, teste e resultado.}
+\end{center}
+
+\begin{center}
+\begin{tikzpicture}[scale=0.78,every node/.style={font=\scriptsize},>=Stealth]
+\draw[very thick,->] (0,3.2)--(3.7,0); \draw[very thick,->] (3.7,0)--(7.4,3.2);
+\node[above] at (3.7,3.45) {Desafio Final: requisitos e validação do sistema};
+\node[left] at (0.4,3.0) {LW4: trajetória}; \node[right] at (7.0,3.0) {testes de integração};
+\node[left] at (1.25,2.25) {LW3: velocidade}; \node[right] at (6.15,2.25) {testes de LW3};
+\node[left] at (2.1,1.5) {LW2: IK}; \node[right] at (5.3,1.5) {testes de LW2};
+\node[left] at (2.95,0.75) {LW1: FK}; \node[right] at (4.45,0.75) {TF, SDK e testes LW1};
+\node[below] at (3.7,-0.15) {LW0: ambiente, segurança e testes B.5};
+\end{tikzpicture}
+\captionof{figure}{Modelo em V da UC: cada módulo é confrontado com uma verificação correspondente.}
+\end{center}
+\textbf{Conclusão.} Foram validados o nível intermédio e a via Docker do nível avançado: B.5, os oito testes C.5, os oito testes de ciclo de vida e a repetição a partir de uma shell limpa passaram no simulador usado. Cada requisito da sessão segura e do regresso a home tem implementação, teste e resultado rastreáveis na tabela acima.
